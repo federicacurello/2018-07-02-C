@@ -7,6 +7,7 @@ package it.polito.tdp.extflightdelays;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.extflightdelays.model.Airport;
 import it.polito.tdp.extflightdelays.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -35,13 +36,13 @@ public class ExtFlightDelaysController {
     private Button btnAnalizza; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbBoxAeroportoPartenza"
-    private ComboBox<?> cmbBoxAeroportoPartenza; // Value injected by FXMLLoader
+    private ComboBox<Airport> cmbBoxAeroportoPartenza; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnAeroportiConnessi"
     private Button btnAeroportiConnessi; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbBoxAeroportoDestinazione"
-    private ComboBox<?> cmbBoxAeroportoDestinazione; // Value injected by FXMLLoader
+    private ComboBox<Airport> cmbBoxAeroportoDestinazione; // Value injected by FXMLLoader
 
     @FXML // fx:id="numeroTratteTxtInput"
     private TextField numeroTratteTxtInput; // Value injected by FXMLLoader
@@ -51,17 +52,64 @@ public class ExtFlightDelaysController {
 
     @FXML
     void doAnalizzaAeroporti(ActionEvent event) {
-
+    	txtResult.clear();
+    	try {
+    		int compagnie= Integer.parseInt(compagnieMinimo.getText());
+    		if(compagnie<1) {
+    			txtResult.setText("Inserire un numero intero maggiore di 0!");
+    			return;
+    		}
+    		 model.creaGrafo(compagnie);
+    	}catch(NumberFormatException e) {
+    		txtResult.setText("Inserire un numero intero maggiore di 0!");
+    		return;
+    	}
+    	setCmbBoxAeroportoPartenza();
+   
     }
 
-    @FXML
+    private void setCmbBoxAeroportoPartenza() {
+    	cmbBoxAeroportoPartenza.getItems().addAll(model.getGrafo().vertexSet());
+		
+	}
+
+	@FXML
     void doCalcolaAeroportiConnessi(ActionEvent event) {
-
+		txtResult.clear();
+		if(cmbBoxAeroportoPartenza.getValue()==null) {
+			txtResult.setText("Selezionare un aereoporto di partenza!");
+			return;
+		}
+		Airport scelto= cmbBoxAeroportoPartenza.getValue();
+		txtResult.appendText(model.getConnessi(scelto));
+		setCmbBoxAeroportoDestinazione();
     }
 
-    @FXML
-    void doCercaItinerario(ActionEvent event) {
+    private void setCmbBoxAeroportoDestinazione() {
+    	cmbBoxAeroportoDestinazione.getItems().addAll(model.getGrafo().vertexSet());
+    	cmbBoxAeroportoDestinazione.getItems().remove(cmbBoxAeroportoPartenza.getValue());
+		
+	}
 
+	@FXML
+    void doCercaItinerario(ActionEvent event) {
+		txtResult.clear();
+		if(cmbBoxAeroportoDestinazione.getValue()==null) {
+			txtResult.setText("Selezionare un aereoporto di destinazione!");
+			return;
+		}
+		Airport arrivo= cmbBoxAeroportoDestinazione.getValue();
+		try {
+    		int maxTratte= Integer.parseInt(numeroTratteTxtInput.getText());
+    		if(maxTratte<1) {
+    			txtResult.setText("Inserire un numero intero maggiore di 0!");
+    			return;
+    		}
+    		 txtResult.appendText(model.cercaItinerario(cmbBoxAeroportoPartenza.getValue(), arrivo, maxTratte) + " totale voli: "+model.pesoMax(model.cercaItinerario(cmbBoxAeroportoPartenza.getValue(), arrivo, maxTratte)));
+    	}catch(NumberFormatException e) {
+    		txtResult.setText("Inserire un numero intero maggiore di 0!");
+    		return;
+    	}
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
